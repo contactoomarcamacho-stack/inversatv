@@ -1,245 +1,570 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Shaka Player en Kodular - AutoPlay con Audio (Intento)</title>
+    <title>Stream Player</title>
     <meta charset="utf-8" />
     <meta name="referrer" content="no-referrer" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.14.10/dist/shaka-player.compiled.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.14.10/dist/shaka-player.compiled.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
 
     <style>
-        /* Estilos básicos para que el video ocupe toda la pantalla */
+        :root {
+            --red: #e8001e;
+            --red-glow: rgba(232, 0, 30, 0.35);
+            --dark: #060608;
+            --panel: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --text: #e0ddd8;
+            --muted: rgba(255,255,255,0.3);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Evita barras de desplazamiento */
-            background-color: black; /* Fondo negro por defecto */
+            width: 100%; height: 100%;
+            background: var(--dark);
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        /* ── GRAIN OVERLAY ── */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.025;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── LAYOUT ── */
+        #app {
+            width: 100%; height: 100%;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+        }
+
+        /* ── HEADER ── */
+        #header {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            z-index: 50;
+            padding: 18px 24px;
+            display: flex;
             align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        #header.hidden { opacity: 0; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 32px; height: 32px;
+            background: var(--red);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 16px var(--red-glow);
+        }
+
+        .logo-icon svg { width: 16px; height: 16px; fill: white; }
+
+        .logo-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            letter-spacing: 2px;
+            color: white;
+        }
+
+        .live-badge {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text);
+            backdrop-filter: blur(10px);
+        }
+
+        .live-dot {
+            width: 7px; height: 7px;
+            background: var(--red);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--red);
+            animation: pulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        /* ── VIDEO ── */
+        #videoWrapper {
+            position: relative;
+            width: 100%; height: 100%;
+            background: #000;
         }
 
         video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Asegura que el video se vea completo dentro del contenedor */
-            background-color: black; /* Fondo del reproductor de video */
+            width: 100%; height: 100%;
+            object-fit: contain;
+            display: block;
         }
 
-        /* Oculta el botón de unmute, ya que intentaremos reproducir con audio directamente */
-        #unmuteButton {
-            display: none !important; 
-        }
-
-        /* Estilo para mensajes de error */
-        .error-message {
+        /* ── CONTROLS ── */
+        #controls {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            color: red;
+            bottom: 0; left: 0; right: 0;
+            z-index: 50;
+            padding: 60px 24px 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        #controls.hidden { opacity: 0; pointer-events: none; }
+
+        .ctrl-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            transition: background 0.2s, transform 0.15s;
+        }
+
+        .ctrl-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.08); }
+        .ctrl-btn:active { transform: scale(0.95); }
+        .ctrl-btn svg { width: 22px; height: 22px; fill: white; }
+
+        .ctrl-btn.primary svg { width: 28px; height: 28px; }
+
+        #volumeSlider {
+            -webkit-appearance: none;
+            width: 80px; height: 3px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            transition: width 0.2s;
+        }
+
+        #volumeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 13px; height: 13px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 0 6px rgba(255,255,255,0.5);
+        }
+
+        .ctrl-spacer { flex: 1; }
+
+        .quality-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        /* ── LOADING SPINNER ── */
+        #loader {
+            position: absolute; inset: 0;
+            z-index: 40;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            text-align: center;
-            font-size: 20px;
-            padding: 20px;
-            box-sizing: border-box;
-            z-index: 100;
+            justify-content: center;
+            gap: 20px;
+            background: var(--dark);
+            transition: opacity 0.6s ease;
         }
+
+        #loader.hidden { opacity: 0; pointer-events: none; }
+
+        .spinner-ring {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            border-top-color: var(--red);
+            animation: spin 0.9s linear infinite;
+            box-shadow: 0 0 20px var(--red-glow);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loader-text {
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        /* ── TAP TO PLAY ── */
+        #tapOverlay {
+            position: absolute; inset: 0;
+            z-index: 45;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        #tapOverlay.visible { display: flex; }
+
+        .tap-circle {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: var(--red);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 40px var(--red-glow), 0 0 80px rgba(232,0,30,0.15);
+            animation: tapPulse 2s ease-in-out infinite;
+        }
+
+        .tap-circle svg { width: 32px; height: 32px; fill: white; margin-left: 4px; }
+
+        @keyframes tapPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 40px var(--red-glow), 0 0 80px rgba(232,0,30,0.15); }
+            50% { transform: scale(1.06); box-shadow: 0 0 60px var(--red-glow), 0 0 100px rgba(232,0,30,0.25); }
+        }
+
+        .tap-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            letter-spacing: 4px;
+            color: white;
+        }
+
+        /* ── ERROR ── */
+        #errorPanel {
+            position: absolute; inset: 0;
+            z-index: 60;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 32px;
+            text-align: center;
+            background: radial-gradient(ellipse at center, rgba(232,0,30,0.08) 0%, var(--dark) 70%);
+        }
+
+        #errorPanel.visible { display: flex; }
+
+        .error-icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            border: 2px solid var(--red);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--red);
+            font-size: 24px;
+            font-weight: 300;
+            box-shadow: 0 0 24px var(--red-glow);
+        }
+
+        .error-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px;
+            letter-spacing: 3px;
+            color: white;
+        }
+
+        .error-msg {
+            font-size: 13px;
+            color: var(--muted);
+            max-width: 340px;
+            line-height: 1.7;
+        }
+
+        .retry-btn {
+            margin-top: 8px;
+            padding: 10px 28px;
+            background: var(--red);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 16px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 20px var(--red-glow);
+            transition: transform 0.15s, box-shadow 0.2s;
+        }
+
+        .retry-btn:hover { transform: scale(1.04); box-shadow: 0 0 32px var(--red-glow); }
     </style>
 </head>
 <body>
-    <video id="videoPlayer" autoplay></video>
+<div id="app">
+    <div id="videoWrapper">
+        <video id="videoPlayer" autoplay playsinline></video>
 
-    <button id="unmuteButton">Activar Sonido</button> 
+        <!-- Header -->
+        <div id="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 16 16"><path d="M3 2l11 6-11 6V2z"/></svg>
+                </div>
+                <span class="logo-text">StreamVX</span>
+            </div>
+            <div class="live-badge">
+                <div class="live-dot"></div>
+                EN VIVO
+            </div>
+        </div>
 
-    <script type="text/javascript">
-        // --- Función para enviar mensajes a Kodular (esencial para depuración) ---
-        function logToKodular(message) {
-            if (window.AppInventor && window.AppInventor.setWebViewString) {
-                window.AppInventor.setWebViewString(message);
-            } else {
-                console.log("Kodular Debug: " + message);
+        <!-- Loader -->
+        <div id="loader">
+            <div class="spinner-ring"></div>
+            <div class="loader-text">Cargando transmisión...</div>
+        </div>
+
+        <!-- Tap to play -->
+        <div id="tapOverlay" onclick="handleTapPlay()">
+            <div class="tap-circle">
+                <svg viewBox="0 0 16 16"><path d="M3 2l11 6-11 6V2z"/></svg>
+            </div>
+            <div class="tap-label">Toca para reproducir</div>
+        </div>
+
+        <!-- Error panel -->
+        <div id="errorPanel">
+            <div class="error-icon">!</div>
+            <div class="error-title" id="errorTitle">Error</div>
+            <div class="error-msg" id="errorMsg"></div>
+            <button class="retry-btn" onclick="retryLoad()">Reintentar</button>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls">
+            <!-- Play/Pause -->
+            <button class="ctrl-btn primary" id="playPauseBtn" onclick="togglePlay()">
+                <svg id="iconPlay" viewBox="0 0 16 16"><path d="M3 2l11 6-11 6V2z"/></svg>
+                <svg id="iconPause" viewBox="0 0 16 16" style="display:none"><rect x="2" y="2" width="4" height="12"/><rect x="10" y="2" width="4" height="12"/></svg>
+            </button>
+
+            <!-- Volume -->
+            <button class="ctrl-btn" id="muteBtn" onclick="toggleMuteUI()">
+                <svg id="iconVol" viewBox="0 0 16 16"><path d="M2 5v6h3l5 4V1L5 5H2zm11 .3a5 5 0 0 1 0 5.4M10.5 3.8a7.5 7.5 0 0 1 0 8.4"/></svg>
+                <svg id="iconMuted" viewBox="0 0 16 16" style="display:none"><path d="M2 5v6h3l5 4V1L5 5H2zm10 2.5l1.5 1.5-1.5 1.5 1 1 1.5-1.5 1.5 1.5 1-1L15.5 9l1.5-1.5-1-1L14.5 8l-1.5-1.5z"/></svg>
+            </button>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)">
+
+            <div class="ctrl-spacer"></div>
+            <div class="quality-label" id="qualityLabel">HD</div>
+
+            <!-- Fullscreen -->
+            <button class="ctrl-btn" onclick="toggleFullscreen()">
+                <svg viewBox="0 0 16 16"><path d="M1 1h5v2H3v3H1zm9 0h5v5h-2V3h-3zm5 9v5h-5v-2h3v-3zm-9 5H1v-5h2v3h3z"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const manifestUri = 'https://sam-py-edge05.tigo.com.py/ccur-session/7f6e3fdb59994965abed8dd5c6faccf517487270122031b65a320aeed11ebae01d90082191a3c1a5MrOL1SVX7zpX7GuV2tRmo/VMX4_widevine/rolling-buffer/TigoSportsHD/TigoSportsHD/transmux/index.mpd';
+
+    const video      = document.getElementById('videoPlayer');
+    const loader     = document.getElementById('loader');
+    const tapOverlay = document.getElementById('tapOverlay');
+    const errorPanel = document.getElementById('errorPanel');
+    const controls   = document.getElementById('controls');
+    const header     = document.getElementById('header');
+    const iconPlay   = document.getElementById('iconPlay');
+    const iconPause  = document.getElementById('iconPause');
+    const iconVol    = document.getElementById('iconVol');
+    const iconMuted  = document.getElementById('iconMuted');
+
+    let hideTimer;
+
+    function logToKodular(msg) {
+        if (window.AppInventor?.setWebViewString) window.AppInventor.setWebViewString(msg);
+        else console.log('[Player]', msg);
+    }
+
+    function showLoader(v) { loader.classList.toggle('hidden', !v); }
+    function showError(title, msg) {
+        document.getElementById('errorTitle').textContent = title;
+        document.getElementById('errorMsg').textContent   = msg;
+        errorPanel.classList.add('visible');
+        showLoader(false);
+    }
+    function hideError() { errorPanel.classList.remove('visible'); }
+
+    function showTap() { tapOverlay.classList.add('visible'); showLoader(false); }
+    function hideTap() { tapOverlay.classList.remove('visible'); }
+
+    function updatePlayIcon() {
+        const paused = video.paused;
+        iconPlay.style.display  = paused  ? '' : 'none';
+        iconPause.style.display = !paused ? '' : 'none';
+    }
+
+    function updateMuteIcon() {
+        iconVol.style.display   = video.muted ? 'none' : '';
+        iconMuted.style.display = video.muted ? ''     : 'none';
+    }
+
+    function scheduleHide() {
+        clearTimeout(hideTimer);
+        controls.classList.remove('hidden');
+        header.classList.remove('hidden');
+        hideTimer = setTimeout(() => {
+            if (!video.paused) {
+                controls.classList.add('hidden');
+                header.classList.add('hidden');
             }
+        }, 3500);
+    }
+
+    document.getElementById('videoWrapper').addEventListener('mousemove', scheduleHide);
+    document.getElementById('videoWrapper').addEventListener('touchstart', scheduleHide);
+
+    function togglePlay() {
+        if (video.paused) video.play(); else video.pause();
+        scheduleHide();
+    }
+
+    function toggleMuteUI() {
+        video.muted = !video.muted;
+        document.getElementById('volumeSlider').value = video.muted ? 0 : video.volume;
+        updateMuteIcon();
+    }
+
+    function setVolume(val) {
+        video.volume = val;
+        video.muted  = (val == 0);
+        updateMuteIcon();
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen?.();
+        } else {
+            document.exitFullscreen?.();
         }
-        // --------------------------------------------------------------------------
+    }
 
-        // La URL de tu manifiesto. Vuelve a verificar si es la correcta y accesible.
-        const manifestUri = 'https://sam-py-edge05.tigo.com.py/ccur-session/7f6e3fdb59994965abed8dd5c6faccf517487270122031b65a320aeed11ebae01d90082191a3c1a5MrOL1SVX7zpX7GuV2tRmo/VMX4_widevine/rolling-buffer/TigoSportsHD/TigoSportsHD/transmux/index.mpd';
+    function handleTapPlay() {
+        hideTap();
+        video.play().then(() => {
+            logToKodular('Reproduciendo tras tap.');
+        }).catch(e => {
+            showError('Error al reproducir', e.message);
+        });
+    }
 
-        async function initApp() {
-            logToKodular('1. Aplicación HTML cargada y DOM listo. Iniciando Shaka Player...');
+    function retryLoad() {
+        hideError();
+        showLoader(true);
+        initApp();
+    }
 
-            shaka.polyfill.installAll();
-            logToKodular('2. Shaka Polyfills instalados.');
+    video.addEventListener('play',   updatePlayIcon);
+    video.addEventListener('pause',  updatePlayIcon);
+    video.addEventListener('waiting',() => showLoader(true));
+    video.addEventListener('playing',() => showLoader(false));
 
-            const video = document.getElementById('videoPlayer');
-            if (!video) {
-                logToKodular('ERROR: Elemento de video no encontrado. ID incorrecto?');
-                displayError('Error de HTML', 'Elemento de video no encontrado. ID incorrecto?');
-                return;
-            }
-            logToKodular('3. Elemento de video (' + video.id + ') obtenido.');
+    async function initApp() {
+        shaka.polyfill.installAll();
+        if (!shaka.Player.isBrowserSupported()) {
+            showError('Navegador no compatible', 'Este navegador no soporta la reproducción de este stream.');
+            return;
+        }
 
-            const player = new shaka.Player(video);
-            window.player = player; 
-            logToKodular('4. Instancia de Shaka Player creada.');
+        const player = new shaka.Player(video);
+        window.player = player;
 
-            player.configure({
-                drm: {
-                    clearKeys: {
-                        "b52a7fa91fb031a3d6f2a505414b6fcd": "a655a22f9c0a66574b5d95dee212fbf9",
-                    }
+        player.configure({
+            drm: {
+                clearKeys: {
+                    "b52a7fa91fb031a3d6f2a505414b6fcd": "a655a22f9c0a66574b5d95dee212fbf9"
                 }
-            });
-            logToKodular('5. Configuración de DRM (Clear Keys) aplicada.');
-
-            player.addEventListener('error', onPlayerErrorEvent);
-            logToKodular('6. Listener de errores añadido.');
-
-            try {
-                logToKodular('7. Intentando cargar manifiesto: ' + manifestUri);
-                await player.load(manifestUri);
-                logToKodular('8. Manifiesto cargado con éxito!');
-
-                // Intentar reproducir el video. Esto PUEDE ser bloqueado si el audio está presente y no hay gesto del usuario.
-                try {
-                    const playPromise = video.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                            logToKodular('9. Video está reproduciendo automáticamente con audio.');
-                        }).catch(error => {
-                            // La reproducción automática fue bloqueada.
-                            logToKodular('ADVERTENCIA: Autoplay con audio fue impedido. Error: ' + error.name + ' - ' + error.message);
-                            displayError('Reproducción Automática Bloqueada', 'Toca la pantalla para reproducir el video con sonido.', true);
-                            
-                            // Opcional: Si el autoplay falla, puedes mutear y reintentar, o mostrar un botón de play.
-                            // video.muted = true;
-                            // video.play();
-                            // logToKodular('Video se reproduce silenciado después de que el autoplay con audio fallara.');
-                        });
-                    }
-                } catch (generalPlayError) {
-                    // Esto puede ocurrir si video.play() lanza un error síncrono.
-                    logToKodular('ERROR SÍNCRONO al intentar play(): ' + generalPlayError.message);
-                    displayError('Error de Play', generalPlayError.message);
-                }
-
-            } catch (error) {
-                onPlayerError(error);
-                logToKodular('ERROR FATAL al cargar el video: Código ' + error.code + ', Mensaje: ' + error.message);
             }
-        }
+        });
 
-        // --- Funciones de manejo de errores y visualización ---
-        function onPlayerErrorEvent(event) {
-            onPlayerError(event.detail);
-        }
+        player.addEventListener('error', e => {
+            const err = e.detail;
+            let msg = `Código ${err.code}`;
+            if (err.code === 6001) msg = 'Error de red. Verifica tu conexión.';
+            else if (err.code === 4012) msg = 'Contenido no soportado en este dispositivo.';
+            else if (err.code === 6006) msg = 'Error de DRM. Claves incorrectas.';
+            showError('Error de reproducción', msg);
+            logToKodular('Error: ' + msg);
+        });
 
-        function onPlayerError(error) {
-            console.error('Shaka Player Error:', error);
-            let errorMessage = 'Error desconocido al cargar el video.';
-            if (error && error.code) {
-                errorMessage = `Código: ${error.code}<br>`;
-                if (error.message) errorMessage += `Mensaje: ${error.message}`;
-                
-                // Errores comunes de Shaka Player que puedes traducir o manejar
-                if (error.code === 6001) errorMessage = "Fallo de red al cargar el manifiesto. Revisa tu conexión.";
-                else if (error.code === 4012) errorMessage = "Contenido no soportado por el navegador/dispositivo.";
-                else if (error.code === 6006) errorMessage = "Fallo de DRM. Las claves o licencias son incorrectas.";
+        // Detect quality
+        player.addEventListener('adaptation', () => {
+            const tracks = player.getVariantTracks().filter(t => t.active);
+            if (tracks.length) {
+                const h = tracks[0].height;
+                const label = h >= 1080 ? 'FHD' : h >= 720 ? 'HD' : h >= 480 ? 'SD' : 'LD';
+                document.getElementById('qualityLabel').textContent = label;
             }
-            displayError('Error de Reproducción', errorMessage);
-        }
+        });
 
-        function displayError(title, message, interactive = false) {
-            let errorContainer = document.querySelector('.error-message');
-            if (!errorContainer) {
-                errorContainer = document.createElement('div');
-                errorContainer.className = 'error-message';
-                document.body.appendChild(errorContainer);
-            }
-            errorContainer.innerHTML = `<h1>${title}</h1><p>${message}</p>`;
+        try {
+            await player.load(manifestUri);
+            logToKodular('Manifiesto cargado.');
 
-            if (interactive) {
-                errorContainer.onclick = () => {
-                    const video = document.getElementById('videoPlayer');
-                    if (video) {
-                        video.play().then(() => {
-                            errorContainer.remove(); // Oculta el mensaje si se reproduce
-                            logToKodular('Video reproducido por interacción del usuario.');
-                        }).catch(e => {
-                            logToKodular('Fallo al reproducir por interacción: ' + e.message);
-                            errorContainer.innerHTML += '<p style="color:yellow;">Error al intentar reproducir. ' + e.message + '</p>';
-                        });
-                    }
-                };
-                errorContainer.style.cursor = 'pointer';
-                errorContainer.innerHTML += '<p style="font-size: 16px; margin-top: 15px;">(Toca aquí para intentar reproducir)</p>';
-            } else {
-                 errorContainer.style.cursor = 'default';
-                 errorContainer.onclick = null;
-            }
-            logToKodular(`Mostrando error: ${title} - ${message}`);
-        }
-        // -------------------------------------------------------------
-
-        // Asegúrate de que el DOM esté completamente cargado antes de inicializar Shaka Player.
-        document.addEventListener('DOMContentLoaded', initApp);
-
-        // --- Funciones para control desde Kodular (opcional) ---
-        // Puedes llamar a estas funciones usando WebViewer.Run Javascript en Kodular.
-        window.muteVideo = function() {
-            const video = document.getElementById('videoPlayer');
-            if (video) {
-                video.muted = true;
-                logToKodular('Video muteado desde Kodular.');
-            }
-        };
-
-        window.unmuteVideo = function() {
-            const video = document.getElementById('videoPlayer');
-            if (video) {
-                video.muted = false;
-                logToKodular('Video desmuteado desde Kodular.');
-            }
-        };
-
-        window.toggleMute = function() {
-            const video = document.getElementById('videoPlayer');
-            if (video) {
-                video.muted = !video.muted;
-                logToKodular('Mute/Unmute alternado a: ' + video.muted);
-            }
-        };
-
-        window.playVideo = function() {
-            const video = document.getElementById('videoPlayer');
-            if (video) {
-                video.play().then(() => {
-                    logToKodular('Video reproducido desde Kodular.');
-                }).catch(e => {
-                    logToKodular('Fallo al reproducir desde Kodular: ' + e.message);
+            const promise = video.play();
+            if (promise !== undefined) {
+                promise.then(() => {
+                    logToKodular('Autoplay OK.');
+                    showLoader(false);
+                    scheduleHide();
+                }).catch(() => {
+                    logToKodular('Autoplay bloqueado. Mostrando tap overlay.');
+                    showTap();
                 });
             }
-        };
+        } catch(err) {
+            let msg = err.message || 'Error desconocido.';
+            showError('No se pudo cargar', msg);
+            logToKodular('Fatal: ' + msg);
+        }
+    }
 
-        window.pauseVideo = function() {
-            const video = document.getElementById('videoPlayer');
-            if (video) {
-                video.pause();
-                logToKodular('Video pausado desde Kodular.');
-            }
-        };
-    </script>
+    document.addEventListener('DOMContentLoaded', initApp);
+
+    // Kodular API
+    window.muteVideo   = () => { video.muted = true;  updateMuteIcon(); };
+    window.unmuteVideo = () => { video.muted = false; updateMuteIcon(); };
+    window.toggleMute  = () => toggleMuteUI();
+    window.playVideo   = () => video.play().catch(()=>{});
+    window.pauseVideo  = () => video.pause();
+</script>
 </body>
 </html>
