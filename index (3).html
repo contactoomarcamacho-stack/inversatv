@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Vicion TV</title>
+
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.14.10/dist/shaka-player.compiled.js"></script>
+
+<style>
+body {
+    margin:0;
+    background:#000;
+    color:#fff;
+    font-family:Arial;
+}
+
+video {
+    width:100%;
+    height:100vh;
+    object-fit:contain;
+}
+
+#channelList {
+    position:absolute;
+    top:0;
+    left:0;
+    width:300px;
+    height:100%;
+    overflow:auto;
+    background:rgba(0,0,0,0.9);
+    padding:10px;
+}
+
+.category {
+    margin-top:10px;
+    font-weight:bold;
+    color:#ff2a2a;
+}
+
+.channel {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:6px;
+    cursor:pointer;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+.channel:hover {
+    background:rgba(255,255,255,0.1);
+}
+
+.channel img {
+    width:40px;
+    height:40px;
+    object-fit:contain;
+}
+</style>
+</head>
+
+<body>
+
+<video id="video" controls autoplay></video>
+<div id="channelList"></div>
+
+<script>
+const video = document.getElementById('video');
+const player = new shaka.Player(video);
+
+const PROXY = "https://inversatv.contactoomarcamacho.deno.net/?url=";
+
+let channelsData = [];
+
+async function loadChannels() {
+    const res = await fetch('channels.json');
+    channelsData = await res.json();
+    renderChannels();
+}
+
+function renderChannels() {
+    const list = document.getElementById('channelList');
+    list.innerHTML = '';
+
+    channelsData.forEach(cat => {
+        const title = document.createElement('div');
+        title.className = 'category';
+        title.innerText = cat.name;
+        list.appendChild(title);
+
+        cat.samples.forEach(ch => {
+            const item = document.createElement('div');
+            item.className = 'channel';
+            item.innerHTML = `
+                <img src="${ch.icono || ''}">
+                <span>${ch.name}</span>
+            `;
+            item.onclick = () => loadChannel(ch);
+            list.appendChild(item);
+        });
+    });
+}
+
+async function loadChannel(channel) {
+    try {
+        await player.unload();
+
+        if (channel.drm_scheme === 'clearkey' && channel.drm_license_uri) {
+            const [keyId, key] = channel.drm_license_uri.split(':');
+            player.configure({
+                drm: {
+                    clearKeys: { [keyId]: key }
+                }
+            });
+        } else {
+            player.configure({ drm: {} });
+        }
+
+        const streamUrl = channel.uri.includes('cvattv.com.ar')
+            ? PROXY + encodeURIComponent(channel.uri)
+            : channel.uri;
+
+        await player.load(streamUrl);
+        video.play();
+
+        console.log("Canal cargado:", channel.name);
+
+    } catch (e) {
+        alert("Error: " + e.message);
+        console.log(e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadChannels();
+});
+</script>
+
+</body>
+</html>
