@@ -637,7 +637,7 @@
         const tabs = document.getElementById('cat-tabs');
         let total = 0;
         fullData.forEach((cat, i) => {
-            total += cat.samples?.length || 0;
+            total += (cat.samples || cat.muestras)?.length || 0;
             const tab = document.createElement('div');
             tab.className = 'cat-tab' + (i === 0 ? ' active' : '');
             tab.textContent = cat.name;
@@ -662,7 +662,7 @@
     function loadCategory(index) {
         const cat = fullData[index];
         if (!cat) return;
-        renderChannels(cat.samples || []);
+        renderChannels(cat.samples || cat.muestras || []);
     }
 
     function renderChannels(channels) {
@@ -672,78 +672,4 @@
 
         if (!channels.length) {
             grid.style.display = 'none';
-            empty.style.display = 'flex';
-            return;
-        }
-
-        grid.style.display = 'grid';
-        empty.style.display = 'none';
-
-        channels.forEach((ch, i) => {
-            const card = document.createElement('div');
-            card.className = 'channel-card';
-            card.style.animationDelay = `${Math.min(i * 0.04, 0.5)}s`;
-            card.innerHTML = `
-                <div class="ch-logo-wrap">
-                    <img class="ch-logo" src="${ch.icono || ''}"
-                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 40%22><text y=%2228%22 font-size=%2222%22>📺</text></svg>'"
-                         loading="lazy" alt="${ch.name}">
-                </div>
-                <div class="ch-name">${ch.name}</div>
-            `;
-            card.onclick = () => {
-                if (activeCard) activeCard.classList.remove('active');
-                card.classList.add('active');
-                activeCard = card;
-                playChannel(ch);
-            };
-            grid.appendChild(card);
-        });
-    }
-
-    function filterChannels(query) {
-        const cat = fullData[currentCatIndex];
-        if (!cat) return;
-        const channels = query
-            ? cat.samples.filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
-            : cat.samples;
-        renderChannels(channels);
-    }
-
-    async function playChannel(channel) {
-        // Update Now Playing UI
-        document.getElementById('np-name').textContent = channel.name;
-        const npLogo = document.getElementById('np-logo');
-        npLogo.src = channel.icono || '';
-        npLogo.onerror = () => { npLogo.src = ''; };
-        document.getElementById('no-signal').style.display = 'none';
-
-        // DRM config
-        if (channel.drm_license_uri) {
-            const [keyId, key] = channel.drm_license_uri.split(':');
-            player.configure({ drm: { clearKeys: { [keyId]: key } } });
-        } else {
-            player.configure({ drm: { clearKeys: {} } });
-        }
-
-        try {
-            await player.load(channel.uri);
-            videoElement.play();
-        } catch (e) {
-            console.error('Error loading channel:', e);
-            showToast('⚠ ERROR AL CARGAR CANAL');
-            document.getElementById('no-signal').style.display = 'flex';
-        }
-    }
-
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2800);
-    }
-
-    document.addEventListener('DOMContentLoaded', initApp);
-</script>
-</body>
-</html>
+  
