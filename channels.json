@@ -1,6 +1,6 @@
 [
   {
-    "name": "⚽ FLOW DEPORTIVOS",
+    "name": "⚽ DEPORTIVOS",
     "samples": [
       {
         "name": "TNT SPORTS PREMIUM",
@@ -219,7 +219,7 @@
       }
     ]
   },
- {
+  {
     "name": "🇦🇷 FLOW ARGENTINA",
     "samples": [
       {
@@ -487,12 +487,17 @@
         "icono": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/MTV_Hits_2021.svg/505px-MTV_Hits_2021.svg.png"
       }
     ]
-   },
+  },
+  {
+    "name": "MUSIC TOP",
+    "samples": [
       {
         "name": "MUSIC TOP",
         "uri": "https://stream-gtlc.telecentro.net.ar:443/hls/musictophls/main.m3u8",
         "icono": "https://i.ibb.co/rfDTXwt/music-top.png"
-       },
+      }
+    ]
+  },
   {
     "name": "🎬 FLOW CINE y SERIES",
     "samples": [
@@ -946,7 +951,7 @@
         "icono": "https://i.ibb.co/pnQ4pkv/mytimemovienetworkspain.jpg"
       }
     ]
- },
+  },
   {
     "name": "🙍🏻‍♀️ FLOW VARIEDADES",
     "samples": [
@@ -1166,7 +1171,7 @@
         "icono": "https://static.flow.com.ar/images/-/-/0/0/20412471072788.png"
       }
     ]
-   },
+  },
   {
     "name": "🙍🏻‍♀️  NOVELAS y VARIEDADES",
     "samples": [
@@ -1184,12 +1189,12 @@
         "name": "VIVE KANAL D DRAMA",
         "uri": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg01602-themahqfrance-vivekanald-samsungspain/playlist.m3u8",
         "icono": "https://i.postimg.cc/TwYJ6M5L/vivekddrama.webp"
-        },
+      },
       {
         "name": "LAS ESTRELLAS MX",
         "uri": "https://channel01-onlymex.akamaized.net/hls/live/2022749/event01/index.m3u8",
         "icono": "https://geo.edge.pontiscloud.com:9002/images/263/CH_LOGO/160/160/0/0/17581646072235.png"
-       },
+      },
       {
         "name": "TELEMUNDO ACCIÓN",
         "uri": "https://d4whmvwm0rdvi.cloudfront.net/10007/99991748/hls/master.m3u8?ads.xumo_channelId=99991748",
@@ -1199,17 +1204,17 @@
         "name": "TELEMUNDO ROMANCE",
         "uri": "https://d4whmvwm0rdvi.cloudfront.net/10007/99991749/hls/master.m3u8?ads.xumo_channelId=99991749",
         "icono": "https://image.xumo.com/v1/channels/channel/99991749/500x400.webp?type=color_onBlack"
-       },
+      },
       {
         "name": "TELEMUNDO AL DÍA",
         "uri": "https://d1rqgw5gocwo9i.cloudfront.net/10009/99991747/hls/master.m3u8?ads.xumo_channelId=99991747",
         "icono": "https://image.xumo.com/v1/channels/channel/99991747/500x400.webp?type=color_onBlack"
-     },
+      },
       {
         "name": "SONY ONE NOVELAS",
         "uri": "https://spt-sonyonenovelas-1-mx.tcl.wurl.tv/playlist.m3u8",
         "icono": "https://i.ibb.co/1z217TL/sony-one-novelas.png"
-     },
+      },
       {
         "name": "ESTRELLA TV",
         "uri": "https://estrellatv-plex.amagi.tv/playlist.m3u8",
@@ -1219,7 +1224,7 @@
         "name": "ESTRELLA NEWS",
         "uri": "https://dbrb49pjoymg4.cloudfront.net/10001/99991776/hls/master.m3u8?ads.xumo_channelId=99991776",
         "icono": "https://i.postimg.cc/YC98HMNg/estrella-news.png"
-       },
+      },
       {
         "name": "AMÉRICA TEVÉ",
         "uri": "https://dbrb49pjoymg4.cloudfront.net/10001/99951140/hls/master.m3u8?ads.xumo_channelId=99951140",
@@ -1229,7 +1234,7 @@
         "name": "TASTEMADE EN ESPAÑOL",
         "uri": "https://cdn-uw2-prod.tsv2.amagi.tv:443/linear/amg00047-tastemade-es16intl-canelatv/playlist.m3u8",
         "icono": "https://image.xumo.com/v1/channels/channel/99991743/500x400.webp?type=color_onBlack"
-     },
+      },
       {
         "name": "JUST FOR LAUGHS GAGS",
         "uri": "https://36cd2ac3e37f411aa72b1d27cfd32791.mediatailor.us-east-1.amazonaws.com/v1/master/0fb304b2320b25f067414d481a779b77db81760d/Samsung-es_JustForLaughsGags/playlist.m3u8",
@@ -1254,7 +1259,7 @@
         "name": "Nosey Escándalos Spanish",
         "uri": "https://6890cf464cc14c12a603f0b5fa2a8a9d.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/TCLTVPlus_NoseyEscandalosSpanish/playlist.m3u8",
         "icono": "https://i.ibb.co/CW1Hr9N/TCLtvplus.webp"
-       },
+      },
       {
         "name": "TV FAMILIA",
         "uri": "https://59d39900ebfb8.streamlock.net:443/tvfamilia_480p/tvfamilia_480p/playlist.m3u8",
@@ -1279,6 +1284,102 @@
         "name": "AZTECA UNO -1 HORA",
         "uri": "https://stream.ads.ottera.tv/playlist.m3u8?network_id=4833",
         "icono": "https://i.postimg.cc/TwY3MLvh/az-uno.png"
+      },
+      {
+        "name": "👩‍👦‍👦 FLOW CANALES INFANTILES",
+        "samples": [
+          {
+            "name": "CARTOONITO",
+            "uri": "https://cdn.cvattv.com.ar/live/c7eds/Boomerang/SA_Live_dash_enc_C/Boomerang.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "5792e613fceb699c79cbc0e75fe4cd37:a672793730476ed23e5c1bce2ff570c6",
+            "icono": "https://i.ibb.co/rx04nzW/cartoonito.png"
+          },
+          {
+            "name": "CARTOON NETWORK",
+            "uri": "https://cdn.cvattv.com.ar/live/c3eds/CartoonNetwork/SA_Live_dash_enc_C/CartoonNetwork.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "d7df56efaa36a71141d238854cc46d1d:8abb2ee9150d8b2af8ebec0de0f833c8",
+            "icono": "https://i.ibb.co/C2PTPBd/cartoon-network.png"
+          },
+          {
+            "name": "DISCOVERY KIDS",
+            "uri": "https://cdn.cvattv.com.ar/live/c6eds/Discovery_Kids/SA_Live_dash_enc_C/Discovery_Kids.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "ffb2f0f63c23a3592d4653e938b9ca19:d3661ae881fc55fc7a15815cd439747b",
+            "icono": "https://i.ibb.co/sQVsMMN/discovery-kids.png"
+          },
+          {
+            "name": "DISNEY CHANNEL",
+            "uri": "https://cdn.cvattv.com.ar/live/c3eds/DisneyChannelHD/SA_Live_dash_enc_C/DisneyChannelHD.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "4a742e478d14023e1993e011d9415f94:0df77ede9bc744376836d21afa137dda",
+            "icono": "https://i.ibb.co/vdfh1bd/disney-channel.png"
+          },
+          {
+            "name": "DISNEY JR.",
+            "uri": "https://cdn.cvattv.com.ar/live/c7eds/DisneyJr/SA_Live_dash_enc_C/DisneyJr.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "bd29c4a538f28845ce33581111749428:46d9589f41a11c3637c07c604956deac",
+            "icono": "https://i.ibb.co/KjzPznS/Disney-Jr.png"
+          },
+          {
+            "name": "NICKELODEON",
+            "uri": "https://cdn.cvattv.com.ar/live/c3eds/Nickelodeon/SA_Live_dash_enc_C/Nickelodeon.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "61c18cefecc2d067beaa9ff181305345:38d6f650cbf9a38fd9f35c01f98e647a",
+            "icono": "https://i.ibb.co/KN9K9xN/nickelodeon.png"
+          },
+          {
+            "name": "NICK JR.",
+            "uri": "https://cdn.cvattv.com.ar/live/c6eds/Nick_Jr/SA_Live_dash_enc_C/Nick_Jr.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "e824b2277a86fd6adfc40aa948e5064a:28da2dbbe8e1a1463bbb23895b922083",
+            "icono": "https://i.ibb.co/CQvYQWW/nick-jr.webp"
+          },
+          {
+            "name": "BABY TV",
+            "uri": "https://cdn.cvattv.com.ar/live/c7eds/BabyTV/SA_Live_dash_enc_C/BabyTV.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "9e09f0a3ecb932582e0f3bc6a6194c8d:6d2363b7ba7680ea3bf6dcbad1efa5bf",
+            "icono": "https://i.ibb.co/S5P0N4w/baby-tv.png"
+          },
+          {
+            "name": "TOONCAST",
+            "uri": "https://cdn.cvattv.com.ar/live/c6eds/Tooncast/SA_Live_dash_enc_C/Tooncast.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "10638a722eb54c64bfb0e7a77483686a:41a7d3d522e19215b7e8f611b6902d61",
+            "icono": "https://i.ibb.co/8bgMYCy/tooncast.png"
+          },
+          {
+            "name": "PAKA PAKA",
+            "uri": "https://cdn.cvattv.com.ar/live/c6eds/PAKA_PAKA/SA_Live_dash_enc_C/PAKA_PAKA.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "334001b2f2644df9bdf35e92d2b89f8f:475ec87d86ed0636dbb6d6d9d4a43bb7",
+            "icono": "https://i.ibb.co/GcBkPWT/paka-paka.png"
+          },
+          {
+            "name": "PLIM PLIM",
+            "uri": "https://cdn.cvattv.com.ar/live/c6eds/Plim_Plim/SA_Live_dash_enc_C/Plim_Plim.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "8e88e1572dcd2b31a10026668d628d61:ab95bdc2655aff4f4a8e512fb68c80df",
+            "icono": "https://i.ibb.co/HgqtG9q/plim-plim.png"
+          },
+          {
+            "name": "KIDOO",
+            "uri": "https://cdn.cvattv.com.ar/live/c6eds/Kidoo/SA_Live_dash_enc_C/Kidoo.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "dcd89337a501ab929c01a039774089dc:e96cc7be9139a8d581b3f5eebebfc10d",
+            "icono": "https://i.postimg.cc/xdRwFst1/kidoo.png"
+          },
+          {
+            "name": "DREAMWORKS",
+            "uri": "https://cdn.cvattv.com.ar/live/c7eds/Dreamworks/SA_Live_dash_enc_C/Dreamworks.mpd",
+            "drm_scheme": "clearkey",
+            "drm_license_uri": "7f30c43e47544412221fd64201d92f4b:f83d09d75a0946b1d71aa48c201b4d8b",
+            "icono": "https://i.ibb.co/10jGH2z/dreamworks.png"
+          }
+        ]
       }
     ]
   },
@@ -1377,7 +1478,7 @@
         "icono": "https://i.ibb.co/10jGH2z/dreamworks.png"
       }
     ]
-   },
+  },
   {
     "name": "🎬 FLOW PACK PREMIUM HBO - UNIVERSAL+",
     "samples": [
@@ -1472,7 +1573,7 @@
         "drm_license_uri": "cedd9c1a5c2ae43f80ee3197212016d6:bf47a3c39e164a97ea6adc4c8dd57435",
         "icono": "https://i.ibb.co/Zz9MB5Y/unireality.png"
       }
-       ]
+    ]
   },
   {
     "name": "🌍 FLOW TELEVISIÓN  INTERNACIONAL",
@@ -1622,7 +1723,8 @@
   {
     "name": "🌍 TELEVISIÓN INTERNACIONAL",
     "samples": [
-      {"name": "DW ESPAÑOL",
+      {
+        "name": "DW ESPAÑOL",
         "uri": "https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8",
         "icono": "https://i.ibb.co/51RdkY3/Deutsche-Welle-symbol-2012-svg.png"
       },
@@ -1869,7 +1971,7 @@
       }
     ]
   },
-  { 
+  {
     "name": "🇦🇷  INTERIOR DE ARGENTINA",
     "samples": [
       {
