@@ -723,7 +723,7 @@
     ]
   },
   {
- "name": "🎬  CINE y SERIES",
+    "name": "🎬  CINE y SERIES",
     "samples": [
       {
         "name": "SONY CINE",
@@ -1279,7 +1279,9 @@
         "name": "AZTECA UNO -1 HORA",
         "uri": "https://stream.ads.ottera.tv/playlist.m3u8?network_id=4833",
         "icono": "https://i.postimg.cc/TwY3MLvh/az-uno.png"
-      },
+      }
+    ]
+  },
   {
     "name": "👩‍👦‍👦 FLOW CANALES INFANTILES",
     "samples": [
@@ -2272,7 +2274,5 @@
         "icono": "https://i.ibb.co/w4yG5bz/ciudadtv.png"
       }
     ]
-  }
-]
   }
 ]
