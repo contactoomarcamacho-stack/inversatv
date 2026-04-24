@@ -1,227 +1,731 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VICION TV</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.debug.js"></script>
-    <style>
-        :root { 
-            --bg: #000000; 
-            --panel: #0a0a0a; 
-            --accent: #39ff14; 
-            --text: #ffffff; 
-            --text-dim: #888888;
-            --line: #1a1a1a;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VICION TV</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.debug.js"></script>
+<style>
+  :root {
+    --bg: #050505;
+    --surface: #0d0d0d;
+    --surface2: #141414;
+    --surface3: #1c1c1c;
+    --accent: #39ff14;
+    --accent-dim: #1f8c0a;
+    --accent-glow: rgba(57,255,20,0.15);
+    --accent-glow2: rgba(57,255,20,0.06);
+    --text: #f0f0f0;
+    --text-dim: #5a5a5a;
+    --text-mid: #9a9a9a;
+    --border: #1e1e1e;
+    --border2: #2a2a2a;
+    --red: #ff3c3c;
+    --sidebar-w: 380px;
+  }
 
-        body { 
-            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; 
-        }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Splash Screen */
-        #splash {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 1000; transition: 0.5s;
-        }
-        #splash.hidden { opacity: 0; pointer-events: none; }
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    overflow: hidden;
+  }
 
-        header { background: var(--panel); padding: 10px; text-align: center; border-bottom: 1px solid var(--line); }
-        header h1 { margin: 0; font-size: 1.1rem; letter-spacing: 3px; color: var(--accent); }
+  /* ─── SPLASH ─────────────────────────────────── */
+  #splash {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 24px;
+    transition: opacity .6s ease, visibility .6s;
+  }
+  #splash.out { opacity: 0; visibility: hidden; }
 
-        /* Contenedor Video Fijo arriba */
-        #player-wrapper { background: #000; width: 100%; position: relative; padding-top: 56.25%; border-bottom: 2px solid var(--accent); }
-        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .splash-logo {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .splash-logo-icon {
+    width: 64px; height: 64px;
+    background: var(--accent);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px var(--accent), 0 0 80px rgba(57,255,20,.3);
+    animation: pulseIcon 1.5s ease-in-out infinite;
+  }
+  @keyframes pulseIcon {
+    0%,100% { box-shadow: 0 0 30px var(--accent), 0 0 60px rgba(57,255,20,.3); }
+    50%      { box-shadow: 0 0 60px var(--accent), 0 0 120px rgba(57,255,20,.5); }
+  }
+  .splash-logo-icon svg { width: 32px; height: 32px; fill: #000; }
+  .splash-title { font-family: 'Rajdhani', sans-serif; font-size: 52px; font-weight: 700; letter-spacing: 6px; }
+  .splash-title span { color: var(--accent); }
 
-        /* Tabs de Navegación (Canales / Favoritos) */
-        .tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--line); }
-        .tab { flex: 1; padding: 12px; text-align: center; font-size: 13px; color: var(--text-dim); cursor: pointer; text-transform: uppercase; font-weight: bold; }
-        .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+  .splash-bar-track {
+    width: 260px; height: 3px; background: #1a1a1a; border-radius: 99px; overflow: hidden;
+  }
+  .splash-bar-fill {
+    height: 100%; background: var(--accent);
+    border-radius: 99px;
+    animation: loadBar 1.5s ease forwards;
+  }
+  @keyframes loadBar { from { width: 0; } to { width: 100%; } }
 
-        /* Categorías Horizontales */
-        #categories-list { 
-            display: flex; overflow-x: auto; background: #050505; padding: 10px; gap: 8px; 
-            border-bottom: 1px solid var(--line); scrollbar-width: none;
-        }
-        #categories-list::-webkit-scrollbar { display: none; }
-        .category-item { 
-            padding: 6px 15px; border-radius: 20px; background: #151515; color: var(--text-dim); 
-            white-space: nowrap; font-size: 12px; border: 1px solid #222;
-        }
-        .category-item.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
+  .splash-sub { font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 4px; color: var(--text-dim); }
 
-        /* LISTA DE CANALES (Estilo pedido) */
-        #channel-grid { flex: 1; overflow-y: auto; background: var(--bg); }
+  /* ─── LAYOUT ─────────────────────────────────── */
+  #app {
+    display: flex; height: 100vh; width: 100vw;
+    opacity: 0; transition: opacity .5s .3s;
+  }
+  #app.visible { opacity: 1; }
 
-        .channel-row { 
-            display: flex; align-items: center; padding: 10px 15px; 
-            border-bottom: 1px solid var(--line); transition: 0.2s; cursor: pointer;
-        }
-        .channel-row:active { background: #111; }
-        
-        .channel-number { width: 40px; color: var(--accent); font-family: monospace; font-size: 14px; font-weight: bold; }
-        
-        .channel-logo { width: 35px; height: 35px; object-fit: contain; margin-right: 15px; border-radius: 4px; }
-        
-        .channel-info { flex: 1; min-width: 0; }
-        .channel-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .channel-sub { font-size: 11px; color: var(--text-dim); }
+  /* ─── SIDEBAR ────────────────────────────────── */
+  #sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    height: 100vh;
+    position: relative;
+    z-index: 10;
+  }
 
-        .fav-star { padding: 10px; color: #333; font-size: 18px; }
-        .fav-star.is-fav { color: var(--accent); }
+  /* Sidebar header */
+  .sb-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .sb-logo-mark {
+    width: 34px; height: 34px; background: var(--accent); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 14px rgba(57,255,20,.5);
+  }
+  .sb-logo-mark svg { width: 18px; height: 18px; fill: #000; }
+  .sb-title { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 3px; }
+  .sb-title span { color: var(--accent); }
 
-        /* Buscador */
-        .search-container { padding: 10px; background: var(--panel); }
-        .search-box { 
-            width: 100%; padding: 8px 12px; background: #1a1a1a; border: 1px solid #333; 
-            border-radius: 6px; color: white; outline: none; font-size: 14px;
-        }
-    </style>
+  /* Lang selector */
+  .lang-bar {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .lang-label {
+    font-size: 10px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase;
+    font-family: 'Rajdhani', sans-serif; font-weight: 600;
+    margin-right: 4px;
+  }
+  .lang-btn {
+    padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border2);
+    background: transparent; color: var(--text-mid); font-family: 'Exo 2', sans-serif;
+    font-size: 11px; cursor: pointer; transition: all .2s;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .lang-btn:hover { border-color: var(--accent-dim); color: var(--text); }
+  .lang-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+  .lang-btn .flag { font-size: 14px; }
+
+  /* Tabs */
+  .sb-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    flex-shrink: 0;
+  }
+  .sb-tab {
+    flex: 1; padding: 12px; text-align: center;
+    font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-dim); cursor: pointer; border: none; background: none;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+  }
+  .sb-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .sb-tab:hover:not(.active) { color: var(--text-mid); }
+
+  /* Search */
+  .sb-search {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .sb-search input {
+    width: 100%; background: var(--surface3); border: 1px solid var(--border2);
+    border-radius: 8px; color: var(--text); font-family: 'Exo 2', sans-serif; font-size: 13px;
+    padding: 9px 14px 9px 38px; outline: none; transition: border-color .2s;
+  }
+  .sb-search input:focus { border-color: var(--accent-dim); }
+  .sb-search input::placeholder { color: var(--text-dim); }
+  .sb-search .search-icon {
+    position: absolute; left: 28px; top: 50%; transform: translateY(-50%);
+    color: var(--text-dim); pointer-events: none;
+  }
+
+  /* Categories */
+  .sb-cats {
+    display: flex; overflow-x: auto; gap: 6px; padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .sb-cats::-webkit-scrollbar { display: none; }
+  .cat-pill {
+    padding: 5px 13px; border-radius: 20px; white-space: nowrap;
+    font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .5px;
+    border: 1px solid var(--border2); background: transparent; color: var(--text-dim);
+    cursor: pointer; transition: all .2s;
+  }
+  .cat-pill:hover { color: var(--text); border-color: var(--border2); }
+  .cat-pill.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* Channel list */
+  #channel-list {
+    flex: 1; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: var(--border2) transparent;
+  }
+  #channel-list::-webkit-scrollbar { width: 4px; }
+  #channel-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  .ch-row {
+    display: flex; align-items: center; padding: 10px 16px; gap: 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background .15s;
+    position: relative;
+  }
+  .ch-row:hover { background: var(--surface2); }
+  .ch-row.playing { background: var(--accent-glow2); }
+  .ch-row.playing::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .ch-num { width: 32px; font-family: 'Rajdhani', sans-serif; font-size: 12px; color: var(--text-dim); text-align: right; flex-shrink: 0; }
+  .ch-logo {
+    width: 38px; height: 38px; border-radius: 6px; object-fit: contain;
+    background: var(--surface3); flex-shrink: 0; border: 1px solid var(--border2);
+  }
+  .ch-info { flex: 1; min-width: 0; }
+  .ch-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ch-meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 5px var(--accent);
+    animation: blink 1.5s ease infinite;
+    flex-shrink: 0;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  .ch-fav {
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    border-radius: 6px; color: var(--text-dim); font-size: 15px;
+    transition: all .2s; cursor: pointer; flex-shrink: 0;
+  }
+  .ch-fav:hover { background: var(--surface3); }
+  .ch-fav.on { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
+
+  .ch-lang-badge {
+    font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .5px;
+    padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border2);
+    color: var(--text-dim); flex-shrink: 0;
+  }
+  .ch-lang-badge.es { border-color: #c8102e44; color: #c8102e; }
+  .ch-lang-badge.en { border-color: #00247d44; color: #4a90d9; }
+  .ch-lang-badge.pt { border-color: #00632244; color: #3cb371; }
+
+  /* ─── MAIN CONTENT ───────────────────────────── */
+  #main {
+    flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* Player */
+  #player-area {
+    flex: 1; min-height: 0; position: relative; background: #000;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  video {
+    width: 100%; height: 100%; object-fit: contain;
+    display: block;
+  }
+
+  /* Overlay info */
+  #now-playing-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,.9) 0%, transparent 100%);
+    padding: 40px 24px 16px;
+    display: flex; align-items: flex-end; gap: 14px;
+    pointer-events: none;
+    opacity: 0; transition: opacity .3s;
+  }
+  #player-area:hover #now-playing-bar { opacity: 1; }
+  .np-logo {
+    width: 48px; height: 48px; border-radius: 8px; object-fit: contain;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+    flex-shrink: 0;
+  }
+  .np-info {}
+  .np-name { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+  .np-sub { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 2px; }
+  .np-live-chip {
+    padding: 3px 9px; background: var(--red); border-radius: 4px;
+    font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    margin-left: auto; align-self: flex-end; flex-shrink: 0;
+  }
+
+  /* No-signal screen */
+  #no-signal {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    background: radial-gradient(ellipse at center, #0d1a0a 0%, #000 70%);
+  }
+  #no-signal svg { width: 64px; height: 64px; opacity: .3; fill: var(--accent); }
+  #no-signal p { font-family: 'Rajdhani', sans-serif; font-size: 14px; letter-spacing: 3px; color: var(--text-dim); }
+  #no-signal.hidden { display: none; }
+
+  /* Bottom status bar */
+  #status-bar {
+    height: 36px; min-height: 36px;
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; gap: 20px;
+    font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 1px;
+    color: var(--text-dim); flex-shrink: 0;
+  }
+  .status-item { display: flex; align-items: center; gap: 6px; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); }
+  .status-dot.green { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .status-dot.red { background: var(--red); }
+  #status-bar .right { margin-left: auto; }
+
+  /* Loading spinner overlay */
+  #loading-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,.8);
+    display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+    z-index: 5;
+  }
+  #loading-overlay.show { display: flex; }
+  .spinner {
+    width: 40px; height: 40px; border: 3px solid var(--surface3);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner-label { font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--text-dim); }
+
+  /* Error toast */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9998;
+    background: #1a0808; border: 1px solid #3d1111; border-radius: 8px;
+    padding: 12px 18px; display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--red);
+    transform: translateY(20px); opacity: 0;
+    transition: all .3s; pointer-events: none;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Empty state */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 40px 20px;
+    color: var(--text-dim); font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;
+    font-size: 13px;
+  }
+  .empty-state svg { width: 36px; opacity: .3; fill: var(--text-dim); }
+
+  /* Scrollbar for whole page */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+</style>
 </head>
 <body>
 
+<!-- SPLASH -->
 <div id="splash">
-    <h1 style="color: #39ff14; letter-spacing: 5px;">VICION TV</h1>
-    <p style="color: #444; font-size: 10px; margin-top: 10px;">CARGANDO...</p>
+  <div class="splash-logo">
+    <div class="splash-logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+    <div class="splash-title">VICION <span>TV</span></div>
+  </div>
+  <div class="splash-bar-track"><div class="splash-bar-fill"></div></div>
+  <div class="splash-sub">CARGANDO CANALES...</div>
 </div>
 
-<header><h1>VICION TV</h1></header>
+<!-- APP -->
+<div id="app">
 
-<div id="player-wrapper">
-    <video id="video" controls autoplay></video>
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+
+    <div class="sb-header">
+      <div class="sb-logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="sb-title">VICION <span>TV</span></div>
+    </div>
+
+    <!-- Language filter -->
+    <div class="lang-bar">
+      <span class="lang-label">Idioma:</span>
+      <button class="lang-btn active" data-lang="all">
+        <span>🌐</span> Todos
+      </button>
+      <button class="lang-btn" data-lang="es">
+        <span class="flag">🇪🇸</span> Español
+      </button>
+      <button class="lang-btn" data-lang="en">
+        <span class="flag">🇺🇸</span> English
+      </button>
+      <button class="lang-btn" data-lang="pt">
+        <span class="flag">🇧🇷</span> Português
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="sb-tabs">
+      <button class="sb-tab active" data-tab="channels">📺 Canales</button>
+      <button class="sb-tab" data-tab="favs">⭐ Favoritos</button>
+    </div>
+
+    <!-- Search -->
+    <div class="sb-search">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="search" placeholder="Buscar canal...">
+    </div>
+
+    <!-- Categories -->
+    <div class="sb-cats" id="cats"></div>
+
+    <!-- Channel list -->
+    <div id="channel-list"></div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="player-area">
+
+      <div id="no-signal">
+        <svg viewBox="0 0 24 24"><path d="M21 3L3 21M17.8 3H6.2L3 6.2v11.6L6.2 21H17.8L21 17.8V6.2L17.8 3zM12 8v4m0 4h.01"/></svg>
+        <p>SELECCIONA UN CANAL</p>
+      </div>
+
+      <video id="video" controls autoplay playsinline></video>
+
+      <div id="now-playing-bar">
+        <img id="np-logo" class="np-logo" src="" alt="">
+        <div class="np-info">
+          <div class="np-name" id="np-name">—</div>
+          <div class="np-sub" id="np-sub">En vivo · VICION TV</div>
+        </div>
+        <div class="np-live-chip">● LIVE</div>
+      </div>
+
+      <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="spinner-label">CONECTANDO...</div>
+      </div>
+    </div>
+
+    <div id="status-bar">
+      <div class="status-item">
+        <div class="status-dot" id="conn-dot"></div>
+        <span id="conn-label">Sin señal</span>
+      </div>
+      <div class="status-item">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 2l-5 5-5-5"/>
+        </svg>
+        <span id="ch-count">0 canales</span>
+      </div>
+      <div class="status-item right" id="now-ch-label" style="color: var(--accent); display:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <span id="playing-name"></span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<div class="tabs">
-    <div class="tab active" onclick="showSection('channels')">Canales</div>
-    <div class="tab" onclick="showSection('favs')">Favoritos</div>
+<!-- Toast -->
+<div id="toast">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+  <span id="toast-msg">Error al cargar el canal</span>
 </div>
-
-<div class="search-container">
-    <input type="text" class="search-box" placeholder="Buscar canal..." id="search">
-</div>
-
-<div id="categories-list"></div>
-
-<div id="channel-grid"></div>
 
 <script>
-    let player, videoElement, fullData = [];
-    let favorites = JSON.parse(localStorage.getItem('vicion_favs')) || [];
-    let currentCat = 0;
-    let showingFavs = false;
+'use strict';
 
-    async function initApp() {
-        videoElement = document.getElementById('video');
-        shaka.polyfill.installAll();
-        player = new shaka.Player(videoElement);
+// ── State ──────────────────────────────────────────────────────────────────
+let shakaPlayer, videoEl;
+let allData   = [];       // raw from JSON
+let favorites = [];
+let currentTab  = 'channels';
+let currentCat  = 0;
+let currentLang = 'all';
+let currentSearch = '';
+let playingUri  = null;
 
-        try {
-            const response = await fetch('channels.json?v=' + Date.now());
-            fullData = await response.json();
-            
-            renderCategories();
-            loadCategory(0);
+const DEMO_DATA = [
+  {
+    name: "Entretenimiento",
+    samples: [
+      { name: "TVE Internacional", uri: "https://ztnr.rtve.es/ztnr/1688877.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/TVE_Internacional_2008.svg/240px-TVE_Internacional_2008.svg.png", lang: "es" },
+      { name: "Antena 3", uri: "https://antena3.atresmedia.com/directo.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Antena_3_logo_2019.svg/240px-Antena_3_logo_2019.svg.png", lang: "es" },
+      { name: "TV Azteca", uri: "https://livestream.aztecaamerica.com/aztecauno/smil:aztecauno.smil/playlist.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/TV_Azteca_logo.svg/240px-TV_Azteca_logo.svg.png", lang: "es" },
+      { name: "BBC World News", uri: "https://vs-cmaf-push-worldnews-uk.akamaized.net/x=4/i=urn:bbc:piff:service:world_news_english/pc_hd_abr_v2.mpd", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/BBC_World_News_2022.svg/240px-BBC_World_News_2022.svg.png", lang: "en" },
+      { name: "CNN International", uri: "https://cnn-cnninternational-1-gb.samsung.wurl.com/manifest/playlist.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/200px-CNN.svg.png", lang: "en" },
+      { name: "Record TV", uri: "https://rbx-streaming.r7.com/live/record.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Logotipo_Record.svg/240px-Logotipo_Record.svg.png", lang: "pt" },
+    ]
+  },
+  {
+    name: "Noticias",
+    samples: [
+      { name: "Euronews ES", uri: "https://streaminges.euronews.com/euronews-es-es.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Euronews_2022_Logo.svg/200px-Euronews_2022_Logo.svg.png", lang: "es" },
+      { name: "France 24 ES", uri: "https://static.france24.com/live/F24_ES_LO_HLS/live_web.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/France_24_logo.svg/200px-France_24_logo.svg.png", lang: "es" },
+      { name: "Al Jazeera EN", uri: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Al_Jazeera_English_Logo.svg/200px-Al_Jazeera_English_Logo.svg.png", lang: "en" },
+      { name: "DW News", uri: "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Deutsche_Welle_symbol_2012.svg/200px-Deutsche_Welle_symbol_2012.svg.png", lang: "en" },
+      { name: "SBT Brasil", uri: "https://sbtagora.sbt.com.br/live/smil:sbt.smil/playlist.m3u8", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/SBT_2020_logo.svg/200px-SBT_2020_logo.svg.png", lang: "pt" },
+    ]
+  },
+  {
+    name: "Deportes",
+    samples: [
+      { name: "Star+ Deportes", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Star_Plus_logo.svg/200px-Star_Plus_logo.svg.png", lang: "es" },
+      { name: "ESPN EN", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/200px-ESPN_wordmark.svg.png", lang: "en" },
+      { name: "Sky Sports", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Sky_Sports_logo_2020.svg/200px-Sky_Sports_logo_2020.svg.png", lang: "en" },
+      { name: "Sport TV PT", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Sport_TV_logo.svg/200px-Sport_TV_logo.svg.png", lang: "pt" },
+    ]
+  },
+  {
+    name: "Películas",
+    samples: [
+      { name: "TCM ES", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/TCM_2021_logo.svg/200px-TCM_2021_logo.svg.png", lang: "es" },
+      { name: "AMC", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/AMC_TV_logo.svg/200px-AMC_TV_logo.svg.png", lang: "en" },
+      { name: "Globo PT", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Globo_2021_logo.svg/200px-Globo_2021_logo.svg.png", lang: "pt" },
+    ]
+  },
+  {
+    name: "Infantil",
+    samples: [
+      { name: "Boing ES", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Boing_Logo.svg/200px-Boing_Logo.svg.png", lang: "es" },
+      { name: "Cartoon Network", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/200px-Cartoon_Network_2010_logo.svg.png", lang: "en" },
+      { name: "Discovery Kids PT", uri: "", icono: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Discovery_Kids_2017.svg/200px-Discovery_Kids_2017.svg.png", lang: "pt" },
+    ]
+  }
+];
 
-            // Recordar último
-            const last = JSON.parse(localStorage.getItem('vicion_last'));
-            if(last) playChannel(last);
+// ── DOM refs ───────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
 
-            setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1000);
-        } catch (e) { alert("Error al cargar canales."); }
+// ── Init ───────────────────────────────────────────────────────────────────
+async function init() {
+  videoEl = $('video');
+  shaka.polyfill.installAll();
+  shakaPlayer = new shaka.Player(videoEl);
 
-        document.getElementById('search').addEventListener('input', (e) => filterChannels(e.target.value));
+  shakaPlayer.addEventListener('error', () => { hideLoading(); showError('Error al cargar el canal'); setStatus(false); });
+
+  videoEl.addEventListener('playing', () => { hideLoading(); setStatus(true); $('no-signal').classList.add('hidden'); });
+  videoEl.addEventListener('waiting', () => showLoading());
+  videoEl.addEventListener('pause',   () => hideLoading());
+
+  // Load data
+  try {
+    const r = await fetch('channels.json?v=' + Date.now());
+    allData = await r.json();
+  } catch (_) {
+    allData = DEMO_DATA;
+  }
+
+  favorites = JSON.parse(localStorage.getItem('vicion_favs') || '[]');
+
+  buildCats();
+  renderList();
+
+  // Last played
+  const last = JSON.parse(localStorage.getItem('vicion_last') || 'null');
+  if (last) playChannel(last, false);
+
+  // Events
+  $('search').addEventListener('input', e => { currentSearch = e.target.value; renderList(); });
+
+  document.querySelectorAll('.sb-tab').forEach(btn => btn.addEventListener('click', () => {
+    currentTab = btn.dataset.tab;
+    document.querySelectorAll('.sb-tab').forEach(b => b.classList.toggle('active', b === btn));
+    currentSearch = ''; $('search').value = '';
+    renderList();
+  }));
+
+  document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => {
+    currentLang = btn.dataset.lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderList();
+  }));
+
+  setTimeout(() => {
+    $('splash').classList.add('out');
+    $('app').classList.add('visible');
+  }, 1800);
+}
+
+function buildCats() {
+  const container = $('cats');
+  container.innerHTML = '';
+  allData.forEach((cat, i) => {
+    const div = document.createElement('div');
+    div.className = `cat-pill${i === currentCat ? ' active' : ''}`;
+    div.textContent = cat.name;
+    div.onclick = () => {
+      currentCat = i;
+      currentTab = 'channels';
+      document.querySelectorAll('.sb-tab').forEach((b,j) => b.classList.toggle('active', j===0));
+      container.querySelectorAll('.cat-pill').forEach((p,j) => p.classList.toggle('active', j===i));
+      renderList();
+    };
+    container.appendChild(div);
+  });
+}
+
+function getChannels() {
+  let list = [];
+  if (currentTab === 'favs') {
+    list = [...favorites];
+  } else {
+    list = allData[currentCat]?.samples || [];
+  }
+
+  if (currentLang !== 'all') list = list.filter(ch => ch.lang === currentLang);
+  if (currentSearch) list = list.filter(ch => ch.name.toLowerCase().includes(currentSearch.toLowerCase()));
+  return list;
+}
+
+function renderList() {
+  const channels = getChannels();
+  const container = $('channel-list');
+
+  $('ch-count').textContent = `${channels.length} canal${channels.length !== 1 ? 'es' : ''}`;
+
+  if (channels.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24"><path d="M21 3L3 21M17.8 3H6.2L3 6.2v11.6L6.2 21H17.8L21 17.8V6.2L17.8 3zM12 8v4m0 4h.01"/></svg>
+      <p>Sin resultados</p></div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  channels.forEach((ch, i) => {
+    const isFav = favorites.some(f => f.uri === ch.uri && f.name === ch.name);
+    const isPlaying = ch.uri && ch.uri === playingUri;
+    const num = String(i + 1).padStart(3, '0');
+
+    const row = document.createElement('div');
+    row.className = `ch-row${isPlaying ? ' playing' : ''}`;
+
+    const langBadge = ch.lang
+      ? `<span class="ch-lang-badge ${ch.lang}">${ch.lang.toUpperCase()}</span>`
+      : '';
+    const liveLabel = ch.uri ? `<span class="live-dot"></span><span>En vivo</span>` : `<span style="color:#444">Sin señal</span>`;
+
+    row.innerHTML = `
+      <div class="ch-num">${num}</div>
+      <img class="ch-logo" src="${ch.icono || ''}" 
+           onerror="this.style.background='#1a1a1a';this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 40 40\\'%3E%3Crect fill=\\'%231a1a1a\\' width=\\'40\\' height=\\'40\\'/%3E%3Ctext fill=\\'%23333\\' x=\\'50%25\\' y=\\'55%25\\' text-anchor=\\'middle\\' font-size=\\'10\\'%3ETV%3C/text%3E%3C/svg%3E'" alt="">
+      <div class="ch-info">
+        <div class="ch-name">${ch.name}</div>
+        <div class="ch-meta">${liveLabel}${langBadge ? `<span style="margin-left:4px">${langBadge}</span>` : ''}</div>
+      </div>
+      <div class="ch-fav${isFav ? ' on' : ''}" title="${isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'}">★</div>
+    `;
+
+    row.querySelector('.ch-fav').addEventListener('click', e => { e.stopPropagation(); toggleFav(ch); });
+    if (ch.uri) row.addEventListener('click', () => playChannel(ch, true));
+
+    container.appendChild(row);
+  });
+}
+
+function toggleFav(ch) {
+  const idx = favorites.findIndex(f => f.uri === ch.uri && f.name === ch.name);
+  if (idx > -1) favorites.splice(idx, 1);
+  else favorites.push(ch);
+  localStorage.setItem('vicion_favs', JSON.stringify(favorites));
+  renderList();
+}
+
+async function playChannel(ch, scroll = true) {
+  if (!ch.uri) { showError('Este canal no tiene señal disponible'); return; }
+  playingUri = ch.uri;
+  localStorage.setItem('vicion_last', JSON.stringify(ch));
+
+  // Update overlay
+  $('np-logo').src = ch.icono || '';
+  $('np-name').textContent = ch.name;
+  $('np-sub').textContent = `En vivo · ${(ch.lang||'').toUpperCase() || 'VICION TV'}`;
+
+  // Status bar
+  $('now-ch-label').style.display = 'flex';
+  $('playing-name').textContent = ch.name;
+
+  $('no-signal').classList.add('hidden');
+  showLoading();
+  setStatus(null);
+  renderList();
+
+  try {
+    await shakaPlayer.unload();
+    shakaPlayer.configure({ drm: { clearKeys: {} } });
+    if (ch.drm_license_uri) {
+      const [id, key] = ch.drm_license_uri.split(':');
+      shakaPlayer.configure({ drm: { clearKeys: { [id]: key } } });
     }
+    await shakaPlayer.load(ch.uri);
+    videoEl.play();
+    setStatus(true);
+    hideLoading();
+  } catch(e) {
+    hideLoading();
+    showError('No se pudo conectar con el canal');
+    setStatus(false);
+    $('no-signal').classList.remove('hidden');
+  }
+}
 
-    function renderCategories() {
-        const container = document.getElementById('categories-list');
-        container.innerHTML = '';
-        fullData.forEach((cat, i) => {
-            const div = document.createElement('div');
-            div.className = `category-item ${i === currentCat ? 'active' : ''}`;
-            div.innerText = cat.name;
-            div.onclick = () => { showingFavs = false; loadCategory(i); };
-            container.appendChild(div);
-        });
-    }
+function showLoading() { $('loading-overlay').classList.add('show'); }
+function hideLoading() { $('loading-overlay').classList.remove('show'); }
 
-    function loadCategory(index) {
-        currentCat = index;
-        showingFavs = false;
-        renderCategories();
-        renderChannels(fullData[index].samples);
-    }
+let toastTimer;
+function showError(msg) {
+  $('toast-msg').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 3500);
+}
 
-    function showSection(type) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        if(type === 'favs') {
-            showingFavs = true;
-            document.querySelectorAll('.tab')[1].classList.add('active');
-            renderChannels(favorites);
-        } else {
-            document.querySelectorAll('.tab')[0].classList.add('active');
-            loadCategory(currentCat);
-        }
-    }
+function setStatus(ok) {
+  const dot = $('conn-dot'), lbl = $('conn-label');
+  if (ok === null) { dot.className = 'status-dot'; lbl.textContent = 'Conectando...'; }
+  else if (ok) { dot.className = 'status-dot green'; lbl.textContent = 'Señal activa'; }
+  else { dot.className = 'status-dot red'; lbl.textContent = 'Sin señal'; }
+}
 
-    function renderChannels(channels) {
-        const grid = document.getElementById('channel-grid');
-        grid.innerHTML = '';
-        channels.forEach((ch, index) => {
-            const isFav = favorites.some(f => f.uri === ch.uri);
-            const num = (index + 1).toString().padStart(3, '0');
-            
-            const row = document.createElement('div');
-            row.className = 'channel-row';
-            row.innerHTML = `
-                <div class="channel-number">${num}</div>
-                <img class="channel-logo" src="${ch.icono}" onerror="this.src='https://via.placeholder.com/40/000/39ff14?text=TV'">
-                <div class="channel-info">
-                    <div class="channel-name">${ch.name}</div>
-                    <div class="channel-sub">En vivo</div>
-                </div>
-                <div class="fav-star ${isFav?'is-fav':''}" onclick="toggleFav(event, '${ch.uri}')">★</div>
-            `;
-            row.onclick = () => playChannel(ch);
-            grid.appendChild(row);
-        });
-    }
-
-    function toggleFav(event, uri) {
-        event.stopPropagation();
-        let channelObj;
-        fullData.forEach(cat => {
-            const found = cat.samples.find(s => s.uri === uri);
-            if(found) channelObj = found;
-        });
-
-        const idx = favorites.findIndex(f => f.uri === uri);
-        if(idx > -1) favorites.splice(idx, 1);
-        else if(channelObj) favorites.push(channelObj);
-
-        localStorage.setItem('vicion_favs', JSON.stringify(favorites));
-        if(showingFavs) renderChannels(favorites);
-        else loadCategory(currentCat);
-    }
-
-    async function playChannel(ch) {
-        localStorage.setItem('vicion_last', JSON.stringify(ch));
-        player.configure({ drm: { clearKeys: {} } });
-        if (ch.drm_license_uri) {
-            const [id, key] = ch.drm_license_uri.split(':');
-            player.configure({ drm: { clearKeys: { [id]: key } } });
-        }
-        try { await player.load(ch.uri); videoElement.play(); } catch (e) {}
-    }
-
-    function filterChannels(term) {
-        const list = showingFavs ? favorites : fullData[currentCat].samples;
-        const filtered = list.filter(ch => ch.name.toLowerCase().includes(term.toLowerCase()));
-        renderChannels(filtered);
-    }
-
-    document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
