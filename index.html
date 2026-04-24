@@ -129,38 +129,46 @@ video#vid { width: 100%; height: 100%; object-fit: contain; display: block; }
 .nb-sub { font-size: 11px; color: rgba(255,255,255,.4); margin-top: 2px; }
 .nb-live { padding: 3px 9px; border-radius: 4px; background: var(--red); font-family: 'Barlow Condensed',sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; flex-shrink: 0; }
 
-/* ══ AUDIO TRACK BAR — inside player section, below video ══ */
+/* ══ AUDIO TRACK OVERLAY — inside #player-wrap, top-right corner ══ */
 #audio-wrap {
-  background: rgba(7,9,14,0.95);
-  border-top: 1px solid var(--border);
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height .3s cubic-bezier(.4,0,.2,1);
-  flex-shrink: 0;
+  position: absolute;
+  top: 10px; right: 10px;
+  z-index: 5;
+  display: flex; align-items: center; gap: 6px;
+  opacity: 0; pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity .25s ease, transform .25s ease;
 }
-#audio-wrap.open { max-height: 52px; }
-.audio-inner {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 14px;
-  overflow-x: auto; scrollbar-width: none;
+#audio-wrap.open {
+  opacity: 1; pointer-events: auto;
+  transform: translateY(0);
 }
-.audio-inner::-webkit-scrollbar { display: none; }
 .audio-label {
-  display: flex; align-items: center; gap: 5px; flex-shrink: 0;
-  font-family: 'Barlow Condensed',sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2.5px;
-  color: var(--text3);
+  display: flex; align-items: center; gap: 4px;
+  font-family: 'Barlow Condensed',sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  color: rgba(255,255,255,0.35);
+  background: rgba(7,9,14,0.7);
+  padding: 4px 8px; border-radius: 6px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.07);
 }
-.audio-label svg { width: 12px; height: 12px; fill: var(--text3); }
-.audio-div { width: 1px; height: 14px; background: var(--border2); flex-shrink: 0; }
-#track-list { display: flex; gap: 6px; flex-shrink: 0; }
+.audio-label svg { width: 10px; height: 10px; fill: rgba(255,255,255,0.35); }
+#track-list { display: flex; gap: 5px; }
 .trk-btn {
-  padding: 4px 13px; border-radius: 20px;
-  background: var(--bg5); border: 1px solid var(--border2);
-  color: var(--text2); font-family: 'Barlow Condensed',sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .5px;
-  cursor: pointer; transition: all .2s; white-space: nowrap;
+  padding: 5px 12px; border-radius: 20px;
+  background: rgba(7,9,14,0.72);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.55);
+  font-family: 'Barlow Condensed',sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .5px;
+  cursor: pointer; transition: all .18s; white-space: nowrap;
+  backdrop-filter: blur(10px);
 }
-.trk-btn:hover { border-color: var(--border3); color: var(--text); }
-.trk-btn.on { background: linear-gradient(135deg,rgba(45,255,110,0.2),rgba(45,255,110,0.08)); border-color: rgba(45,255,110,0.45); color: var(--accent); }
+.trk-btn:hover { border-color: rgba(255,255,255,0.28); color: #fff; background: rgba(7,9,14,0.88); }
+.trk-btn.on {
+  background: linear-gradient(135deg,rgba(45,255,110,0.28),rgba(45,255,110,0.12));
+  border-color: rgba(45,255,110,0.55); color: var(--accent);
+  box-shadow: 0 0 12px rgba(45,255,110,0.2);
+}
 
 /* ═══ SCROLLABLE BOTTOM SECTION ═══ */
 #bottom-section {
@@ -320,16 +328,13 @@ video#vid { width: 100%; height: 100%; object-fit: contain; display: block; }
         <div class="nb-live">● LIVE</div>
       </div>
       <div id="ld-overlay"><div class="ld-ring"></div><div class="ld-txt">CONECTANDO</div></div>
-    </div>
 
-    <!-- AUDIO TRACK BAR — pegado debajo del video, dentro del player section -->
-    <div id="audio-wrap">
-      <div class="audio-inner">
+      <!-- AUDIO OVERLAY — top-right corner inside the video -->
+      <div id="audio-wrap">
         <div class="audio-label">
           <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
           AUDIO
         </div>
-        <div class="audio-div"></div>
         <div id="track-list"></div>
       </div>
     </div>
