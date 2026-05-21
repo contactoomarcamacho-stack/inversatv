@@ -276,6 +276,65 @@ video#vid { width: 100%; height: 100%; object-fit: contain; display: block; }
 #toast.ok { border-color: rgba(45,255,110,.28); color: var(--accent); }
 #toast.err { border-color: rgba(255,64,96,.28); color: var(--red); }
 #toast svg { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
+/* ══ CUSTOM VIDEO CONTROLS BAR ══ */
+#vc-bar {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 6;
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 10px;
+  background: linear-gradient(to top, rgba(7,9,14,.92) 0%, transparent 100%);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s ease;
+}
+#player-wrap:hover #vc-bar,
+#player-wrap.show-ctrl #vc-bar { opacity: 1; pointer-events: auto; }
+.vc-btn {
+  width: 36px; height: 36px; border-radius: 8px; border: none;
+  background: rgba(255,255,255,0.08); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: background .15s;
+}
+.vc-btn:hover { background: rgba(255,255,255,0.18); }
+.vc-btn svg { width: 18px; height: 18px; fill: #fff; }
+.vc-spacer { flex: 1; }
+.vc-audio-toggle {
+  display: flex; flex-direction: row; align-items: center; gap: 5px;
+  width: auto; padding: 0 12px; font-family: 'Barlow Condensed',sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  background: rgba(45,255,110,0.18); border: 1px solid rgba(45,255,110,0.4);
+  color: var(--accent);
+}
+.vc-audio-toggle svg { fill: var(--accent); }
+.vc-audio-toggle:hover { background: rgba(45,255,110,0.28); }
+/* Panel de pistas */
+#vc-track-panel {
+  position: absolute; bottom: 44px; right: 0;
+  min-width: 180px;
+  background: rgba(11,14,22,0.97); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; padding: 10px 8px;
+  backdrop-filter: blur(12px);
+  display: none; flex-direction: column; gap: 5px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+}
+#vc-track-panel.open { display: flex; }
+.vtp-title {
+  font-family: 'Barlow Condensed',sans-serif; font-size: 9px; letter-spacing: 3px;
+  color: var(--text3); padding: 2px 8px 6px; border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+.vtp-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 8px; border: none;
+  background: transparent; color: rgba(255,255,255,0.6);
+  font-family: 'Barlow Condensed',sans-serif; font-size: 14px; font-weight: 600;
+  letter-spacing: .5px; cursor: pointer; text-align: left; width: 100%;
+  transition: background .15s;
+}
+.vtp-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.vtp-btn.on {
+  background: rgba(45,255,110,0.13); color: var(--accent);
+}
+.vtp-check { width: 14px; height: 14px; flex-shrink: 0; fill: var(--accent); opacity: 0; }
+.vtp-btn.on .vtp-check { opacity: 1; }
 </style>
 </head>
 <body>
@@ -318,7 +377,7 @@ video#vid { width: 100%; height: 100%; object-fit: contain; display: block; }
         </div>
         <div class="ns-txt">SELECCIONÁ UN CANAL</div>
       </div>
-      <video id="vid" autoplay playsinline controls></video>
+      <video id="vid" autoplay playsinline></video>
       <div id="now-bar">
         <img id="nb-logo" class="nb-logo" src="" alt="">
         <div class="nb-info">
@@ -336,6 +395,31 @@ video#vid { width: 100%; height: 100%; object-fit: contain; display: block; }
           AUDIO
         </div>
         <div id="track-list"></div>
+      </div>
+
+      <!-- CUSTOM CONTROLS BAR -->
+      <div id="vc-bar">
+        <button id="vc-play" class="vc-btn" title="Play/Pause">
+          <svg id="vc-play-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button id="vc-mute" class="vc-btn" title="Mute">
+          <svg id="vc-mute-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        </button>
+        <div class="vc-spacer"></div>
+        <!-- Botón AUDIO que abre el panel de pistas -->
+        <div id="vc-audio-wrap" style="position:relative;display:none">
+          <button id="vc-audio-btn" class="vc-btn vc-audio-toggle" title="Cambiar audio">
+            <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+            <span id="vc-audio-lbl">AUDIO</span>
+          </button>
+          <div id="vc-track-panel">
+            <div class="vtp-title">Pista de audio</div>
+            <div id="vc-track-list"></div>
+          </div>
+        </div>
+        <button id="vc-fs" class="vc-btn" title="Pantalla completa">
+          <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        </button>
       </div>
     </div>
   </div>
@@ -435,6 +519,66 @@ const DEMO = [
 
 async function boot() {
   vid_el = G('vid');
+
+  // ── Custom controls ──
+  const pw = document.getElementById('player-wrap');
+
+  // Mostrar controles al tocar el video (móvil)
+  pw.addEventListener('click', e => {
+    if (e.target.closest('#vc-bar') || e.target.closest('#vc-track-panel')) return;
+    pw.classList.toggle('show-ctrl');
+    // Ocultar automáticamente tras 3s
+    clearTimeout(pw._hideT);
+    if (pw.classList.contains('show-ctrl')) {
+      pw._hideT = setTimeout(() => pw.classList.remove('show-ctrl'), 3000);
+    }
+  });
+
+  // Play/Pause
+  G('vc-play').addEventListener('click', e => {
+    e.stopPropagation();
+    if (vid_el.paused) vid_el.play(); else vid_el.pause();
+    resetHideTimer(pw);
+  });
+  vid_el.addEventListener('play',  () => { G('vc-play-icon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; });
+  vid_el.addEventListener('pause', () => { G('vc-play-icon').innerHTML = '<path d="M8 5v14l11-7z"/>'; });
+
+  // Mute
+  G('vc-mute').addEventListener('click', e => {
+    e.stopPropagation();
+    vid_el.muted = !vid_el.muted;
+    updateMuteIcon();
+    resetHideTimer(pw);
+  });
+  function updateMuteIcon() {
+    G('vc-mute-icon').innerHTML = vid_el.muted
+      ? '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
+      : '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>';
+  }
+
+  // Fullscreen
+  G('vc-fs').addEventListener('click', e => {
+    e.stopPropagation();
+    const el = document.getElementById('player-section');
+    if (!document.fullscreenElement) el.requestFullscreen?.() || el.webkitRequestFullscreen?.();
+    else document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+    resetHideTimer(pw);
+  });
+
+  // Audio panel toggle
+  G('vc-audio-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    G('vc-track-panel').classList.toggle('open');
+    resetHideTimer(pw);
+  });
+  // Cerrar panel al tocar fuera
+  document.addEventListener('click', () => G('vc-track-panel').classList.remove('open'));
+
+  function resetHideTimer(pw) {
+    pw.classList.add('show-ctrl');
+    clearTimeout(pw._hideT);
+    pw._hideT = setTimeout(() => pw.classList.remove('show-ctrl'), 3000);
+  }
   shaka.polyfill.installAll();
   shaka_p = new shaka.Player(vid_el);
 
@@ -593,12 +737,14 @@ async function playCh(ch) {
 }
 
 function buildAudio() {
-  const tl = G('track-list'); tl.innerHTML = '';
-  const aw = G('audio-wrap');
+  const tl = G('vc-track-list');
+  if (!tl) return;
+  tl.innerHTML = '';
+  const aw = G('vc-audio-wrap');
   let tracks = [];
   try { tracks = shaka_p.getAudioLanguagesAndRoles(); } catch(_) {}
 
-  // Fallback: intentar obtener pistas desde variantes si getAudioLanguagesAndRoles falla
+  // Fallback: buscar pistas desde variantes
   if (!tracks || tracks.length === 0) {
     try {
       const variants = shaka_p.getVariantTracks();
@@ -609,40 +755,50 @@ function buildAudio() {
     } catch(_) {}
   }
 
-  if (!tracks || tracks.length === 0) { aw.classList.remove('open'); return; }
+  if (!tracks || tracks.length === 0) { aw.style.display = 'none'; return; }
 
-  // Deduplicar por language+role
   const seen = new Set();
   const uniq = tracks.filter(t => {
     const k = t.language + '|' + (t.role || '');
     if(seen.has(k)) return false; seen.add(k); return true;
   });
 
-  if (uniq.length < 1) { aw.classList.remove('open'); return; }
+  if (uniq.length < 1) { aw.style.display = 'none'; return; }
 
+  aw.style.display = 'block';
   const curLang = shaka_p.getAudioLanguage();
+
+  // Actualizar etiqueta del botón con idioma activo
+  const curInfo = lang(curLang);
+  G('vc-audio-lbl').textContent = curInfo ? curInfo.flag + ' ' + curInfo.label : (curLang || 'AUDIO').toUpperCase();
+
   uniq.forEach(t => {
     const info = lang(t.language);
-    let lbl = info ? (info.flag + ' ' + info.label) : t.language.toUpperCase();
+    let lbl = info ? (info.flag + '  ' + info.label) : t.language.toUpperCase();
     if (t.channelsCount === 6) lbl += ' 5.1';
     const btn = document.createElement('button');
-    btn.className = 'trk-btn' + (t.language === curLang ? ' on' : '');
-    btn.textContent = lbl;
-    btn.addEventListener('click', () => {
+    btn.className = 'vtp-btn' + (t.language === curLang ? ' on' : '');
+    btn.innerHTML = `<svg class="vtp-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>${lbl}`;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
       shaka_p.selectAudioLanguage(t.language, t.role);
-      document.querySelectorAll('.trk-btn').forEach(b => b.classList.remove('on'));
+      document.querySelectorAll('.vtp-btn').forEach(b => b.classList.remove('on'));
       btn.classList.add('on');
+      G('vc-track-panel').classList.remove('open');
       const i2 = lang(t.language);
+      G('vc-audio-lbl').textContent = i2 ? i2.flag + ' ' + i2.label : t.language.toUpperCase();
       showToast('🔊 Audio: ' + (i2 ? i2.label : t.language), 'ok');
     });
     tl.appendChild(btn);
   });
-  aw.classList.add('open');
 }
 
 function closeAudio() {
-  G('audio-wrap').classList.remove('open');
-  G('track-list').innerHTML = '';
+  const aw = G('vc-audio-wrap');
+  if (aw) aw.style.display = 'none';
+  const tl = G('vc-track-list');
+  if (tl) tl.innerHTML = '';
+  G('vc-track-panel').classList.remove('open');
 }
 
 function showLoader() { G('ld-overlay').classList.add('on'); }
