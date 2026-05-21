@@ -451,7 +451,8 @@ async function boot() {
     hideLoader(); setSig('ok');
     G('no-sig').classList.add('hidden');
     G('live-badge').style.cssText = 'opacity:1;pointer-events:auto';
-    setTimeout(buildAudio, 1800);
+    // Retry buildAudio varias veces hasta que Shaka reporte las pistas
+    [1000, 2500, 4500].forEach(ms => setTimeout(buildAudio, ms));
   });
   vid_el.addEventListener('waiting', showLoader);
   vid_el.addEventListener('pause', hideLoader);
@@ -597,24 +598,42 @@ function buildAudio() {
   let tracks = [];
   try { tracks = shaka_p.getAudioLanguagesAndRoles(); } catch(_) {}
 
-  const seen = new Set();
-  const uniq = tracks.filter(t => { const k=t.language; if(seen.has(k)) return false; seen.add(k); return true; });
+  // Fallback: intentar obtener pistas desde variantes si getAudioLanguagesAndRoles falla
+  if (!tracks || tracks.length === 0) {
+    try {
+      const variants = shaka_p.getVariantTracks();
+      const seen2 = new Set();
+      tracks = variants
+        .filter(v => { if(seen2.has(v.language)) return false; seen2.add(v.language); return true; })
+        .map(v => ({ language: v.language, role: (v.roles && v.roles[0]) || '', channelsCount: v.channelsCount }));
+    } catch(_) {}
+  }
 
-  if(uniq.length < 2) { aw.classList.remove('open'); return; }
+  if (!tracks || tracks.length === 0) { aw.classList.remove('open'); return; }
+
+  // Deduplicar por language+role
+  const seen = new Set();
+  const uniq = tracks.filter(t => {
+    const k = t.language + '|' + (t.role || '');
+    if(seen.has(k)) return false; seen.add(k); return true;
+  });
+
+  if (uniq.length < 1) { aw.classList.remove('open'); return; }
 
   const curLang = shaka_p.getAudioLanguage();
   uniq.forEach(t => {
     const info = lang(t.language);
-    const lbl = info ? `${info.flag} ${info.label}` : t.language.toUpperCase();
+    let lbl = info ? (info.flag + ' ' + info.label) : t.language.toUpperCase();
+    if (t.channelsCount === 6) lbl += ' 5.1';
     const btn = document.createElement('button');
-    btn.className = `trk-btn${t.language===curLang?' on':''}`;
+    btn.className = 'trk-btn' + (t.language === curLang ? ' on' : '');
     btn.textContent = lbl;
     btn.addEventListener('click', () => {
       shaka_p.selectAudioLanguage(t.language, t.role);
-      document.querySelectorAll('.trk-btn').forEach(b=>b.classList.remove('on'));
+      document.querySelectorAll('.trk-btn').forEach(b => b.classList.remove('on'));
       btn.classList.add('on');
       const i2 = lang(t.language);
-      showToast(`🔊 Audio: ${i2?i2.label:t.language}`, 'ok');
+      showToast('🔊 Audio: ' + (i2 ? i2.label : t.language), 'ok');
     });
     tl.appendChild(btn);
   });
