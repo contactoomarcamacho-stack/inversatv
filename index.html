@@ -590,13 +590,21 @@ async function boot() {
     closeAudio();
   });
   shaka_p.addEventListener('trackschanged', buildAudio);
+  shaka_p.addEventListener('adaptation',    buildAudio);
 
   vid_el.addEventListener('playing', () => {
     hideLoader(); setSig('ok');
     G('no-sig').classList.add('hidden');
     G('live-badge').style.cssText = 'opacity:1;pointer-events:auto';
-    // Retry buildAudio varias veces hasta que Shaka reporte las pistas
-    [1000, 2500, 4500].forEach(ms => setTimeout(buildAudio, ms));
+    // Polling: intentar cada 800ms hasta 10 veces hasta que aparezcan pistas
+    let tries = 0;
+    const poll = setInterval(() => {
+      tries++;
+      buildAudio();
+      // Parar cuando encontramos pistas o al cabo de 10 intentos (8s)
+      const hasTracks = G('vc-audio-wrap').style.display !== 'none';
+      if (hasTracks || tries >= 10) clearInterval(poll);
+    }, 800);
   });
   vid_el.addEventListener('waiting', showLoader);
   vid_el.addEventListener('pause', hideLoader);
@@ -739,24 +747,35 @@ async function playCh(ch) {
 function buildAudio() {
   const tl = G('vc-track-list');
   if (!tl) return;
-  tl.innerHTML = '';
   const aw = G('vc-audio-wrap');
-  let tracks = [];
-  try { tracks = shaka_p.getAudioLanguagesAndRoles(); } catch(_) {}
 
-  // Fallback: buscar pistas desde variantes
-  if (!tracks || tracks.length === 0) {
-    try {
-      const variants = shaka_p.getVariantTracks();
-      const seen2 = new Set();
-      tracks = variants
-        .filter(v => { if(seen2.has(v.language)) return false; seen2.add(v.language); return true; })
-        .map(v => ({ language: v.language, role: (v.roles && v.roles[0]) || '', channelsCount: v.channelsCount }));
-    } catch(_) {}
+  // Obtener variantes de audio (más confiable que getAudioLanguagesAndRoles en HLS)
+  let variants = [];
+  try { variants = shaka_p.getVariantTracks(); } catch(_) {}
+
+  // Filtrar solo variantes con audio y deduplicar por audioId
+  const seenId = new Set();
+  const audioVariants = variants.filter(v => {
+    const id = v.audioId ?? v.language + '|' + (v.roles?.[0] || '');
+    if (seenId.has(id)) return false;
+    seenId.add(id); return true;
+  });
+
+  // Fallback a getAudioLanguagesAndRoles si no hay variantes
+  let tracks = [];
+  if (audioVariants.length > 0) {
+    const seenLang = new Set();
+    tracks = audioVariants
+      .filter(v => { if(seenLang.has(v.language)) return false; seenLang.add(v.language); return true; })
+      .map(v => ({ language: v.language, role: (v.roles && v.roles[0]) || '', channelsCount: v.channelsCount, label: v.label }));
+  } else {
+    try { tracks = shaka_p.getAudioLanguagesAndRoles(); } catch(_) {}
   }
 
+  // Si no hay nada todavía, ocultar y esperar siguiente intento
   if (!tracks || tracks.length === 0) { aw.style.display = 'none'; return; }
 
+  // Deduplicar por language+role
   const seen = new Set();
   const uniq = tracks.filter(t => {
     const k = t.language + '|' + (t.role || '');
@@ -765,19 +784,35 @@ function buildAudio() {
 
   if (uniq.length < 1) { aw.style.display = 'none'; return; }
 
+  // Reconstruir lista
+  tl.innerHTML = '';
   aw.style.display = 'block';
-  const curLang = shaka_p.getAudioLanguage();
+  const curLang = shaka_p.getAudioLanguage() || '';
 
-  // Actualizar etiqueta del botón con idioma activo
+  // Etiqueta del botón
   const curInfo = lang(curLang);
-  G('vc-audio-lbl').textContent = curInfo ? curInfo.flag + ' ' + curInfo.label : (curLang || 'AUDIO').toUpperCase();
+  G('vc-audio-lbl').textContent = curInfo
+    ? curInfo.flag + ' ' + curInfo.label
+    : (curLang && curLang !== 'und' ? curLang.toUpperCase() : 'AUDIO');
 
-  uniq.forEach(t => {
+  // Nombres alternativos para idiomas sin código ISO reconocido
+  const FALLBACK_NAMES = { und:'Pista 1', zxx:'Pista 2', mul:'Multi' };
+
+  uniq.forEach((t, idx) => {
     const info = lang(t.language);
-    let lbl = info ? (info.flag + '  ' + info.label) : t.language.toUpperCase();
+    let lbl;
+    if (info) {
+      lbl = info.flag + '  ' + info.label;
+    } else if (t.label) {
+      lbl = '🎵  ' + t.label;
+    } else {
+      lbl = '🎵  ' + (FALLBACK_NAMES[t.language] || ('Pista ' + (idx+1)));
+    }
     if (t.channelsCount === 6) lbl += ' 5.1';
+
+    const isActive = t.language === curLang || (curLang === '' && idx === 0);
     const btn = document.createElement('button');
-    btn.className = 'vtp-btn' + (t.language === curLang ? ' on' : '');
+    btn.className = 'vtp-btn' + (isActive ? ' on' : '');
     btn.innerHTML = `<svg class="vtp-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>${lbl}`;
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -786,8 +821,10 @@ function buildAudio() {
       btn.classList.add('on');
       G('vc-track-panel').classList.remove('open');
       const i2 = lang(t.language);
-      G('vc-audio-lbl').textContent = i2 ? i2.flag + ' ' + i2.label : t.language.toUpperCase();
-      showToast('🔊 Audio: ' + (i2 ? i2.label : t.language), 'ok');
+      G('vc-audio-lbl').textContent = i2
+        ? i2.flag + ' ' + i2.label
+        : (t.label || FALLBACK_NAMES[t.language] || ('Pista ' + (idx+1)));
+      showToast('🔊 Audio: ' + (i2 ? i2.label : (t.label || t.language)), 'ok');
     });
     tl.appendChild(btn);
   });
